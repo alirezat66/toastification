@@ -1,5 +1,7 @@
 import 'package:drift/drift.dart';
-import 'package:drift/wasm.dart';
+import 'connection/connection.dart'
+    if (dart.library.html) 'connection/web.dart'
+    if (dart.library.io) 'connection/native.dart';
 
 part 'database.g.dart';
 
@@ -37,22 +39,10 @@ class ToastDetailsSchema extends Table {
 
 @DriftDatabase(tables: [ToastDetailsSchema])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  AppDatabase() : super(connect());
 
   @override
   int get schemaVersion => 1;
-
-  static LazyDatabase _openConnection() {
-    return LazyDatabase(() async {
-      final result = await WasmDatabase.open(
-        databaseName: 'app_web_db',
-        sqlite3Uri: Uri.parse('sqlite3.wasm'),
-        driftWorkerUri: Uri.parse('drift_worker.dart.js'),
-      );
-
-      return result.resolvedExecutor;
-    });
-  }
 
   Future<int> upsertToastDetail(ToastDetailsSchemaCompanion detail) {
     return into(toastDetailsSchema).insert(
